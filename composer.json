@@ -6,5 +6,7 @@
             "email": "ploginoff@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "linwj/bitfinex": "^1.0"
+    }
 }
