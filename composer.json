@@ -1,0 +1,10 @@
+{
+    "name": "ploginoff/bitfinex",
+    "authors": [
+        {
+            "name": "Pavel Loginov",
+            "email": "ploginoff@gmail.com"
+        }
+    ],
+    "require": {}
+}
