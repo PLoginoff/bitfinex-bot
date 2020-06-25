@@ -1,4 +1,12 @@
+#!/usr/bin/env php
 <?php
+
+/*
+$ ./run.php "BTCUSD, buy, 1"
+tBTCUSD 0.00085807
+$ ./run.php "BTCUSD, sell, 1"
+tBTCUSD -0.00087828
+*/
 
 require_once 'vendor/autoload.php';
 
@@ -7,16 +15,51 @@ use Lin\Bitfinex\Bitfinex;
 $config   = require 'config.php';
 $bitfinex = new Bitfinex($config['key'], $config['secret']);
 
+$signal = $argv[1] ?? null;
+
+if (!$signal) {
+    exit('php run.php "BTCUSD, sell, 1"\n');
+}
+
+[$ticket_, $dir_, $amount_] = explode(',', $signal);
+
+//$signal = explode(' ','BTCUSD 1');
+
+$ticket = 't'. trim($ticket_);
+$dir    = trim($dir_);
+$amount = intval(trim($amount_));
+
+if ($dir === 'sell') {
+    $amount = -1 * $amount;
+}
+
 //Place an Order
 try {
-    $result=$bitfinex->order()->postSubmit([
-        //'cid'=>'',
-        'type'      => 'LIMIT',
-        'symbol'    => 'tBTCUSD',
+    $rate_ = $bitfinex->calc()->postTradeAvg(['symbol' => $ticket, 'amount' => 1,]);
+    $rate = $rate_[0];
+
+    $orderAvail_ = $bitfinex->account()->postCalcOrderAvail([
+        'symbol'    => $ticket,
+        'dir'       => $dir === 'sell' ? -1 : 1,
+        'type'      => 'MARGIN',
+        'rate'      => $rate,
+    ]);
+
+    $orderAvail = $orderAvail_[0];
+
+    $orderAmount = ($orderAvail / 100) * abs($amount) * 10;
+
+    echo "$ticket $orderAmount\n";
+    return; // test this before!
+
+    $result = $bitfinex->order()->postSubmit([
+        'type'      => 'MARKET', // todo to limit?!
+        'symbol'    => $ticket,
         'price'     => '1000',
-        'amount'    => '0.001',//Amount of order (positive for buy, negative for sell)
+        'amount'    => $orderAmount, //Amount of order (positive for buy, negative for sell)
     ]);
     print_r($result);
+
 }catch (\Exception $e){
     print_r(json_decode($e->getMessage(),true));
 }
