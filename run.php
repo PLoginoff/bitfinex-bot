@@ -18,6 +18,10 @@ $bitfinex = new Bitfinex($config['key'], $config['secret']);
 $signal = $argv[1] ?? null;
 
 if (!$signal) {
+    $signal = trim(file_get_contents('php://input'));
+}
+
+if (!$signal) {
     exit('php run.php "BTCUSD, sell, 1"\n');
 }
 
@@ -49,13 +53,15 @@ try {
 
     $orderAmount = ($orderAvail / 100) * abs($amount) * 10;
 
-    echo "$ticket $orderAmount\n";
-    return; // test this before!
+    $log = date('c') . ": $signal => $ticket $orderAmount\n";
+    echo $log;
+    file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
+    return;
 
     $result = $bitfinex->order()->postSubmit([
         'type'      => 'MARKET', // todo to limit?!
         'symbol'    => $ticket,
-        'price'     => '1000',
+      //'price'     => '1000',
         'amount'    => $orderAmount, //Amount of order (positive for buy, negative for sell)
     ]);
     print_r($result);
