@@ -53,18 +53,25 @@ try {
 
     $orderAmount = ($orderAvail / 100) * abs($amount) * 10;
 
-    $log = date('c') . ": $signal => $ticket $orderAmount\n";
+    if ($orderAvail > $orderAmount) {
+        $log = date('c') . ": $signal => no\n";
+    } else {
+        $log = date('c') . ": $signal => $ticket $orderAmount\n";
+    }
+
     echo $log;
     file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
-    return;
 
     $result = $bitfinex->order()->postSubmit([
         'type'      => 'MARKET', // todo to limit?!
         'symbol'    => $ticket,
-      //'price'     => '1000',
-        'amount'    => $orderAmount, //Amount of order (positive for buy, negative for sell)
+        //'price'     => null,
+        'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
     ]);
-    print_r($result);
+
+    $orderStatus = $result[0];
+    echo $orderStatus . "\n";
+    file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
 
 }catch (\Exception $e){
     print_r(json_decode($e->getMessage(),true));
