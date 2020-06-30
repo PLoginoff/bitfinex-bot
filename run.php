@@ -29,6 +29,8 @@ if (!$signal) {
 
 //$signal = explode(' ','BTCUSD 1');
 
+$dry = false; // dry run
+
 $ticket = 't'. trim($ticket_);
 $dir    = trim($dir_);
 $amount = intval(trim($amount_));
@@ -53,25 +55,27 @@ try {
 
     $orderAmount = ($orderAvail / 100) * abs($amount) * 10;
 
-    if ($orderAvail > $orderAmount) {
-        $log = date('c') . ": $signal => no\n";
-    } else {
+    if (abs($orderAvail) > abs($orderAmount)) {
         $log = date('c') . ": $signal => $ticket $orderAmount\n";
+    } else {
+        $log = date('c') . ": $signal => no\n";
     }
 
     echo $log;
     file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
 
-    $result = $bitfinex->order()->postSubmit([
-        'type'      => 'MARKET', // todo to limit?!
-        'symbol'    => $ticket,
-        //'price'     => null,
-        'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
-    ]);
+    if (!$dry && abs($orderAvail) > abs($orderAmount)) {
+        $result = $bitfinex->order()->postSubmit([
+            'type'      => 'MARKET', // todo to limit?!
+            'symbol'    => $ticket,
+            //'price'     => null,
+            'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
+        ]);
 
-    $orderStatus = $result[0];
-    echo $orderStatus . "\n";
-    file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
+        $orderStatus = $result[0];
+        echo $orderStatus . "\n";
+        file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
+    }
 
 }catch (\Exception $e){
     print_r(json_decode($e->getMessage(),true));
