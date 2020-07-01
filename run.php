@@ -76,7 +76,6 @@ try {
         echo $orderStatus . "\n";
         file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
     }
-
 }catch (\Exception $e){
-    print_r(json_decode($e->getMessage(),true));
+    file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
 }
