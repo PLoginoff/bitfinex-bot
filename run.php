@@ -30,6 +30,7 @@ if (!$signal) {
 //$signal = explode(' ','BTCUSD 1');
 
 $dry = false; // dry run
+$multiply = 15; // percent for one signal
 
 $ticket = 't'. trim($ticket_);
 $dir    = trim($dir_);
@@ -62,7 +63,7 @@ try {
 
     $orderAvail = $orderAvail_[0];
 
-    $orderAmount = ($orderAvail / 100) * abs($amount) * 10;
+    $orderAmount = ($orderAvail / 100) * abs($amount) * $multiply;
 
     if (abs($orderAvail) > abs($orderAmount)) {
         $log = date('c') . ": $signal => $ticket $orderAmount\n";
