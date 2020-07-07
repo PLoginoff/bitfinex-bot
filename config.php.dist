@@ -1,4 +1,6 @@
 <?php return [
-    'key'    => 'KEY',
-    'secret' => 'SECRET',
+    'key'       => 'KEY',
+    'secret'    => 'SECRET',
+    'next'      => null, // next server, optional
+    'multiply'  => 10,
 ];

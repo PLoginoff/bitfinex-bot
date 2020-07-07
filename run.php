@@ -21,6 +21,10 @@ if (!$signal) {
     $signal = trim(file_get_contents('php://input'));
 }
 
+if (isset($config['next'])) {
+    file_get_contents($config['next'], false, stream_context_create(['http' => ['method' => 'POST', 'content' => $signal]]));
+}
+
 if (!$signal) {
     exit('php run.php "BTCUSD, sell, 1"\n');
 }
@@ -30,7 +34,7 @@ if (!$signal) {
 //$signal = explode(' ','BTCUSD 1');
 
 $dry = false; // dry run
-$multiply = 15; // percent for one signal
+$multiply = $config['multiply'] ?? 10; // percent for one signal
 
 $ticket = 't'. trim($ticket_);
 $dir    = trim($dir_);
