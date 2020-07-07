@@ -35,11 +35,20 @@ $ticket = 't'. trim($ticket_);
 $dir    = trim($dir_);
 $amount = intval(trim($amount_));
 
+// if we have positions of the same ticket
+if ($amount > 1) {
+    $positions = $bitfinex->position()->post([]);
+    $check = in_array($ticket, array_column($positions,0));
+    if (!$check) {
+        $amount = 1;
+    }
+}
+
 if ($dir === 'sell') {
     $amount = -1 * $amount;
 }
 
-//Place an Order
+// Place an Order
 try {
     $rate_ = $bitfinex->calc()->postTradeAvg(['symbol' => $ticket, 'amount' => 1,]);
     $rate = $rate_[0];
