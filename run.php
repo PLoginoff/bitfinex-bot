@@ -33,12 +33,15 @@ if (!$signal) {
 
 //$signal = explode(' ','BTCUSD 1');
 
-$dry = false; // dry run
+$dry      = $config['dry']      ?? false; // dry run
 $multiply = $config['multiply'] ?? 10; // percent for one signal
 
 $ticket = 't'. trim($ticket_);
 $dir    = trim($dir_);
 $amount = intval(trim($amount_));
+
+$what   = substr($ticket, 1, 3);
+$base   = substr($ticket, -3, 3);
 
 // if we have positions of the same ticket
 if ($amount > 1) {
@@ -55,30 +58,17 @@ if ($dir === 'sell') {
 
 // Place an Order
 try {
-    $rate_ = $bitfinex->calc()->postTradeAvg(['symbol' => $ticket, 'amount' => 1,]);
-    $rate = $rate_[0];
+    $price   = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
+    $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
 
-    $orderAvail_ = $bitfinex->account()->postCalcOrderAvail([
-        'symbol'    => $ticket,
-        'dir'       => $dir === 'sell' ? -1 : 1,
-        'type'      => 'MARGIN',
-        'rate'      => $rate,
-    ]);
+    $orderAmount = round(($balance / $price) * ($amount / 100) * $multiply, 8);
 
-    $orderAvail = $orderAvail_[0];
-
-    $orderAmount = ($orderAvail / 100) * abs($amount) * $multiply;
-
-    if (abs($orderAvail) > abs($orderAmount)) {
-        $log = date('c') . ": $signal => $ticket $orderAmount\n";
-    } else {
-        $log = date('c') . ": $signal => no\n";
-    }
+    $log = date('c') . ": $signal => $ticket $orderAmount\n";
 
     echo $log;
     file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
 
-    if (!$dry && abs($orderAvail) > abs($orderAmount)) {
+    if (!$dry) {
         $result = $bitfinex->order()->postSubmit([
             'type'      => 'MARKET', // todo to limit?!
             'symbol'    => $ticket,
