@@ -3,4 +3,6 @@
     'secret'    => 'SECRET',
     'next'      => null, // next server, optional
     'multiply'  => 10,
+    'telegram_token'    => '',
+    'telegram_chat_id'  => '',
 ];

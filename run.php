@@ -11,6 +11,7 @@ tBTCUSD -0.00087828
 require_once 'vendor/autoload.php';
 
 use Lin\Bitfinex\Bitfinex;
+use Telegram\Bot\Api as Telegram;
 
 $config   = require 'config.php';
 $bitfinex = new Bitfinex($config['key'], $config['secret']);
@@ -82,4 +83,12 @@ try {
     }
 }catch (\Exception $e){
     file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
+}
+
+if (isset($config['telegram_token'])) {
+    $telegram = new Telegram($config['telegram_token']);
+    $telegram->sendMessage([
+        'chat_id'   => $config['telegram_chat_id'],
+        'text'      => "#signal $ticket_ " . ($dir === 'sell' ? -1 * $amount_ : $amount_),
+    ]);
 }
