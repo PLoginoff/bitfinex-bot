@@ -87,8 +87,9 @@ try {
 
 if (isset($config['telegram_token'])) {
     $telegram = new Telegram($config['telegram_token']);
+    $formatPrice = $price > 1 ? number_format($price, 0) : number_format($price, 2);
     $telegram->sendMessage([
         'chat_id'   => $config['telegram_chat_id'],
-        'text'      => "$dir #$ticket_ @ " . number_format($price, 0) . ' ~ ' . $amount_,
+        'text'      => "$dir #$ticket_ @ $formatPrice ~ " . $amount_,
     ]);
 }
