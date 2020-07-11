@@ -89,6 +89,6 @@ if (isset($config['telegram_token'])) {
     $telegram = new Telegram($config['telegram_token']);
     $telegram->sendMessage([
         'chat_id'   => $config['telegram_chat_id'],
-        'text'      => "#signal $ticket_ " . ($dir === 'sell' ? -1 * $amount_ : $amount_),
+        'text'      => "$dir #$ticket_ @ " . number_format($price, 0),
     ]);
 }
