@@ -45,44 +45,57 @@ $what   = substr($ticket, 1, 3);
 $base   = substr($ticket, -3, 3);
 
 // if we have positions of the same ticket
-if ($amount > 1) {
+if ($amount > 1 or $dir === 'trail') {
     $positions = $bitfinex->position()->post([]);
-    $check = in_array($ticket, array_column($positions,0));
-    if (!$check) {
-        $amount = 1;
-    }
-}
-
-if ($dir === 'sell') {
-    $amount = -1 * $amount;
-}
-
-// Place an Order
-try {
-    $price   = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
-    $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
-
-    $orderAmount = round(($balance / $price) * ($amount / 100) * $multiply, 8);
-
-    $log = date('c') . ": $signal => $ticket $orderAmount\n";
-
-    echo $log;
-    file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
-
-    if (!$dry) {
-        $result = $bitfinex->order()->postSubmit([
-            'type'      => 'MARKET', // todo to limit?!
+    $index     = array_search($ticket, array_column($positions, 0));
+    if ($index) {
+        $orderInfo   = $positions[$index];
+        $closeAmount = -1 * $orderInfo[2];
+        $closeMargin = $bitfinex->order()->postSubmit([
+            'type'      => 'MARKET',
             'symbol'    => $ticket,
-            //'price'     => null,
-            'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
+            'amount'    => (string)$closeAmount, //Amount of order (positive for buy, negative for sell)
         ]);
-
-        $orderStatus = $result[0];
-        echo $orderStatus . "\n";
-        file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
     }
-}catch (\Exception $e){
-    file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
+}
+
+if ($dir === 'trail') {
+    $date = date('c');
+    $log = "\n$date: $signal => $ticket";
+    $log .= $closeAmount??' Позиции не обнаружено';
+    $log .= $closeMargin[0]??'';
+    file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
+} else {
+    $amount = 1;
+    if ($dir === 'sell') {
+        $amount = -1 * $amount;
+    }
+    // Place an Order
+    try {
+        $price   = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
+        $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
+
+        $orderAmount = round((3.3 * $balance / $price) * ($multiply / 100) * $amount, 8);
+
+        $log = date('c') . ": $signal => $ticket $orderAmount\n";
+
+        echo $log;
+        file_put_contents(__DIR__ . '/run.log', $log, FILE_APPEND);
+
+        if (!$dry) {
+            $result = $bitfinex->order()->postSubmit([
+                'type'      => 'MARKET',
+                'symbol'    => $ticket,
+                'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
+            ]);
+
+            $orderStatus = $result[0];
+            echo $orderStatus . "\n";
+            file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
+        }
+    }catch (\Exception $e){
+        file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
+    }
 }
 
 if (isset($config['telegram_token'])) {
