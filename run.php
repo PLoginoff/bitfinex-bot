@@ -51,11 +51,15 @@ if ($amount > 1 or $dir === 'trail') {
     if ($index) {
         $orderInfo   = $positions[$index];
         $closeAmount = -1 * $orderInfo[2];
-        $closeMargin = $bitfinex->order()->postSubmit([
-            'type'      => 'MARKET',
-            'symbol'    => $ticket,
-            'amount'    => (string)$closeAmount, //Amount of order (positive for buy, negative for sell)
-        ]);
+        try {
+            $closeMargin = $bitfinex->order()->postSubmit([
+                'type'      => 'MARKET',
+                'symbol'    => $ticket,
+                'amount'    => (string)$closeAmount, //Amount of order (positive for buy, negative for sell)
+            ]);
+        } catch (\Exception $e) {
+            file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
+        }
     }
 }
 
@@ -93,7 +97,7 @@ if ($dir === 'trail') {
             echo $orderStatus . "\n";
             file_put_contents(__DIR__ . '/run.log', $result[0] . "\n", FILE_APPEND);
         }
-    }catch (\Exception $e){
+    } catch (\Exception $e) {
         file_put_contents(__DIR__ . '/run.log', $e->getMessage() . "\n", FILE_APPEND);
     }
 }
