@@ -62,11 +62,6 @@ if (isset($config['telegram_token'])) {
     ]);
 }
 
-if (count($positions) >= $max_positions and $dir !== 'trail') {
-    logger("$signal => MAX POSITIONS = $max_positions");
-    exit(1);
-}
-
 // close position if we have positions of the same ticket
 if ($position and ($amount > 1 or $dir === 'trail')) {
     try {
@@ -82,7 +77,9 @@ if ($position and ($amount > 1 or $dir === 'trail')) {
     }
 }
 
-if (in_array($dir, ['sell', 'buy'])) {
+if (!$position and count($positions) >= $max_positions) {
+    logger("$signal => MAX POSITIONS = $max_positions");
+} elseif (in_array($dir, ['sell', 'buy'])) {
     try {
         // Place an Order
         $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
