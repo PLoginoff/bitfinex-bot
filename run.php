@@ -25,6 +25,8 @@ if (isset($config['next'])) {
     file_get_contents($config['next'], false, stream_context_create(['http' => ['method' => 'POST', 'content' => $signal]]));
 }
 
+logger("INPUT> $signal");
+
 if ($config['locking'] ?? true) {
     $lock = fopen(__DIR__ . '/run.log', 'r+');
     flock($lock, LOCK_EX); // wait for lock...
