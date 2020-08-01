@@ -36,7 +36,6 @@ if ($config['locking'] ?? true) {
 $ticker         = 't'. trim($_ticker);
 $dir            = trim($_dir);
 $amount         = intval(trim($_amount));
-$amount_dir     = $amount * ($dir === 'sell' ? -1 : 1);
 
 $dry            = $config['dry']           ?? false; // dry run
 $multiply       = $config['multiply']      ?? 10; // percent for one signal
@@ -81,10 +80,12 @@ if (!$position and count($positions) >= $max_positions) {
     logger("$signal => MAX POSITIONS = $max_positions");
 } elseif (in_array($dir, ['sell', 'buy'])) {
     try {
+        $amount_order = ($dir === 'sell' ? -1 : 1); // в итоге покупаем после закрытия максимум на *1
+
         // Place an Order
         $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
 
-        $orderAmount = round(($balance / $price) * ($multiply / 100) * $amount_dir, 8);
+        $orderAmount = round(($balance / $price) * ($multiply / 100) * $amount_order, 8);
 
         logger("$signal => $ticker $orderAmount");
 
