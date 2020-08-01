@@ -25,6 +25,11 @@ if (isset($config['next'])) {
     file_get_contents($config['next'], false, stream_context_create(['http' => ['method' => 'POST', 'content' => $signal]]));
 }
 
+if ($config['locking'] ?? true) {
+    $lock = fopen(__DIR__ . '/run.log', 'r+');
+    flock($lock, LOCK_EX); // wait for lock...
+}
+
 [$ticket_, $dir_, $amount_] = explode(',', $signal);
 
 $dry            = $config['dry']           ?? false; // dry run
@@ -50,7 +55,7 @@ if (isset($config['telegram_token'])) {
     ]);
 }
 
-if (count($positions) >= $max_positions) {
+if (count($positions) >= $max_positions and $dir !== 'trail') {
     logger("$signal => MAX POSITIONS = " . $max_positions);
     exit(1);
 }
