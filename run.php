@@ -80,7 +80,7 @@ if (!$position and count($positions) >= $max_positions) {
     logger("$signal => MAX POSITIONS = $max_positions");
 } elseif (in_array($dir, ['sell', 'buy'])) {
     try {
-        $amount_order = ($dir === 'sell' ? -1 : 1); // в итоге покупаем после закрытия максимум на *1
+        $amount_order = 1 * ($dir === 'sell' ? -1 : 1); // в итоге берем после закрытия максимум на *1
 
         // Place an Order
         $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
