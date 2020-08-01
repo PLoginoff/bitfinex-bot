@@ -33,15 +33,14 @@ if ($config['locking'] ?? true) {
 }
 
 [$_ticker, $_dir, $_amount] = explode(',', $signal);
-
-$dry            = $config['dry']           ?? false; // dry run
-$multiply       = $config['multiply']      ?? 10; // percent for one signal
-$max_positions  = $config['max_positions'] ?? 10;
-
 $ticker         = 't'. trim($_ticker);
 $dir            = trim($_dir);
 $amount         = intval(trim($_amount));
 $amount_dir     = $amount * ($dir === 'sell' ? -1 : 1);
+
+$dry            = $config['dry']           ?? false; // dry run
+$multiply       = $config['multiply']      ?? 10; // percent for one signal
+$max_positions  = $config['max_positions'] ?? 10;
 
 $what           = substr($ticker, 1, 3);
 $base           = substr($ticker, -3, 3);
@@ -59,13 +58,12 @@ if (isset($config['telegram_token'])) {
         $formatPrice = number_format($price, 6);
     }
     (new Telegram($config['telegram_token']))->sendMessage([
-        'chat_id'   => $config['telegram_chat_id'],
-        'text'      => "$dir #$_ticker @ $formatPrice ~ " . $amount,
+        'chat_id' => $config['telegram_chat_id'], 'text' => "$dir #$_ticker @ $formatPrice ~ $amount",
     ]);
 }
 
 if (count($positions) >= $max_positions and $dir !== 'trail') {
-    logger("$signal => MAX POSITIONS = " . $max_positions);
+    logger("$signal => MAX POSITIONS = $max_positions");
     exit(1);
 }
 
@@ -74,9 +72,9 @@ if ($position and ($amount > 1 or $dir === 'trail')) {
     try {
         $closeAmount = -1 * $position[2];
         $closeMargin = $bitfinex->order()->postSubmit([
-            'type'      => 'MARKET',
-            'symbol'    => $ticker,
-            'amount'    => (string) $closeAmount, //Amount of order (positive for buy, negative for sell)
+            'type'   => 'MARKET',
+            'symbol' => $ticker,
+            'amount' => (string) $closeAmount, //Amount of order (positive for buy, negative for sell)
         ]);
         logger("$signal => $ticker => CLOSE $closeAmount " . $closeMargin[0]);
     } catch (\Exception $e) {
@@ -95,9 +93,9 @@ if (in_array($dir, ['sell', 'buy'])) {
 
         if (!$dry) {
             $result = $bitfinex->order()->postSubmit([
-                'type'      => 'MARKET',
-                'symbol'    => $ticker,
-                'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
+                'type'   => 'MARKET',
+                'symbol' => $ticker,
+                'amount' => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
             ]);
             logger('Submit: ' . $result[0]);
         }
