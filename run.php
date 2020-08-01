@@ -30,28 +30,35 @@ if ($config['locking'] ?? true) {
     flock($lock, LOCK_EX); // wait for lock...
 }
 
-[$ticket_, $dir_, $amount_] = explode(',', $signal);
+[$_ticker, $_dir, $_amount] = explode(',', $signal);
 
 $dry            = $config['dry']           ?? false; // dry run
 $multiply       = $config['multiply']      ?? 10; // percent for one signal
 $max_positions  = $config['max_positions'] ?? 10;
 
-$ticket     = 't'. trim($ticket_);
-$dir        = trim($dir_);
-$amount     = intval(trim($amount_));
-$amount_dir = $amount * ($dir === 'sell' ? -1 : 1);
+$ticker         = 't'. trim($_ticker);
+$dir            = trim($_dir);
+$amount         = intval(trim($_amount));
+$amount_dir     = $amount * ($dir === 'sell' ? -1 : 1);
 
-$what       = substr($ticket, 1, 3);
-$base       = substr($ticket, -3, 3);
-$price      = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
-$positions  = $bitfinex->position()->post([]);
+$what           = substr($ticker, 1, 3);
+$base           = substr($ticker, -3, 3);
+$price          = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
+$positions      = $bitfinex->position()->post([]);
+$_index         = array_search($ticker, array_column($positions, 0));
+$position       = $_index ? $positions[$_index] : null; // position with current ticker
 
 if (isset($config['telegram_token'])) {
-    $telegram = new Telegram($config['telegram_token']);
-    $formatPrice = $price > 1 ? number_format($price, 0) : number_format($price, 2);
-    $telegram->sendMessage([
+    if ($price > 10) {
+        $formatPrice = number_format($price, 0);
+    } elseif ($price > 0.1) {
+        $formatPrice = number_format($price, 2);
+    } else {
+        $formatPrice = number_format($price, 6);
+    }
+    (new Telegram($config['telegram_token']))->sendMessage([
         'chat_id'   => $config['telegram_chat_id'],
-        'text'      => "$dir #$ticket_ @ $formatPrice ~ " . $amount_,
+        'text'      => "$dir #$_ticker @ $formatPrice ~ " . $amount,
     ]);
 }
 
@@ -60,37 +67,34 @@ if (count($positions) >= $max_positions and $dir !== 'trail') {
     exit(1);
 }
 
-$_index = array_search($ticket, array_column($positions, 0));
-$position = $_index ? $positions[$_index] : null; // position with current ticker
-
 // close position if we have positions of the same ticket
 if ($position and ($amount > 1 or $dir === 'trail')) {
-    $closeAmount = -1 * $position[2];
     try {
+        $closeAmount = -1 * $position[2];
         $closeMargin = $bitfinex->order()->postSubmit([
             'type'      => 'MARKET',
-            'symbol'    => $ticket,
+            'symbol'    => $ticker,
             'amount'    => (string) $closeAmount, //Amount of order (positive for buy, negative for sell)
         ]);
-        logger("$signal => $ticket => CLOSE $closeAmount " . $closeMargin[0]);
+        logger("$signal => $ticker => CLOSE $closeAmount " . $closeMargin[0]);
     } catch (\Exception $e) {
         logger($e->getMessage());
     }
 }
 
-if ($dir !== 'trail') {
-    // Place an Order
+if (in_array($dir, ['sell', 'buy'])) {
     try {
+        // Place an Order
         $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
 
         $orderAmount = round(($balance / $price) * ($multiply / 100) * $amount_dir, 8);
 
-        logger("$signal => $ticket $orderAmount");
+        logger("$signal => $ticker $orderAmount");
 
         if (!$dry) {
             $result = $bitfinex->order()->postSubmit([
                 'type'      => 'MARKET',
-                'symbol'    => $ticket,
+                'symbol'    => $ticker,
                 'amount'    => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
             ]);
             logger('Submit: ' . $result[0]);
