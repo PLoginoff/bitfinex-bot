@@ -70,7 +70,7 @@ if ($position and ($amount > 1 or $dir === 'trail')) {
         $closeMargin = $bitfinex->order()->postSubmit([
             'type'      => 'MARKET',
             'symbol'    => $ticket,
-            'amount'    => (string)$closeAmount, //Amount of order (positive for buy, negative for sell)
+            'amount'    => (string) $closeAmount, //Amount of order (positive for buy, negative for sell)
         ]);
         logger("$signal => $ticket => CLOSE $closeAmount " . $closeMargin[0]);
     } catch (\Exception $e) {
@@ -79,15 +79,11 @@ if ($position and ($amount > 1 or $dir === 'trail')) {
 }
 
 if ($dir !== 'trail') {
-    $amount = 1; // fixme нафига это??
-    if ($dir === 'sell') {
-        $amount = -1 * $amount;
-    }
     // Place an Order
     try {
         $balance = $bitfinex->position()->postInfoMarginKey(['key'=>'base'])[1][2];
 
-        $orderAmount = round((3.3 * $balance / $price) * ($multiply / 100) * $amount, 8);
+        $orderAmount = round(($balance / $price) * ($multiply / 100) * $amount_dir, 8);
 
         logger("$signal => $ticket $orderAmount");
 
