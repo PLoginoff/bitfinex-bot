@@ -69,6 +69,7 @@ if ($position and ($amount > 1 or $dir === 'trail')) {
             'type'   => 'MARKET',
             'symbol' => $ticker,
             'amount' => (string) $closeAmount, //Amount of order (positive for buy, negative for sell)
+            'meta'   => ['aff_code' => 'nt8rjwkL7'],
         ]);
         logger("$signal => $ticker => CLOSE $closeAmount " . $closeMargin[0]);
     } catch (\Exception $e) {
@@ -94,6 +95,7 @@ if (!$position and count($positions) >= $max_positions) {
                 'type'   => 'MARKET',
                 'symbol' => $ticker,
                 'amount' => (string) $orderAmount, //Amount of order (positive for buy, negative for sell)
+                'meta'   => ['aff_code' => 'nt8rjwkL7'],
             ]);
             logger('Submit: ' . $result[0]);
         }
