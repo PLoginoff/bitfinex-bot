@@ -46,7 +46,7 @@ $base           = substr($ticker, -3, 3);
 $price          = $bitfinex->calc()->postTradeAvg(['symbol' => 't' . $what . 'USD', 'amount' => 1,])[0];
 $positions      = $bitfinex->position()->post([]);
 $_index         = array_search($ticker, array_column($positions, 0));
-$position       = $_index ? $positions[$_index] : null; // position with current ticker
+$position       = $_index !== false ? $positions[$_index] : null; // position with current ticker
 
 if (isset($config['telegram_token'])) {
     if ($price > 10) {
